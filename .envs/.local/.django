@@ -1,0 +1,9 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+DJANGO_SECRET_KEY=6-mr5%$c9^yki(ob+qh3i$^zp^f7t=0d9kwxr7r-^zgqzf4ap)
+
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
