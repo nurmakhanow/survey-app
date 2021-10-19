@@ -9,6 +9,7 @@ User = get_user_model()
 
 
 @admin.register(Survey)
-class SurveyAdmin(auth_admin.UserAdmin):
+class SurveyAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'date_start', 'date_end',)
+    readonly_fields = ('id', 'date_start',)
 

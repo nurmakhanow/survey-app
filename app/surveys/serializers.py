@@ -11,3 +11,13 @@ class AdminSurveySerializer(serializers.ModelSerializer):
     class Meta:
         model = Survey
         fields = ('id', 'title', 'description', 'date_start', 'date_end',)
+
+
+class AdminSurveyUpdateSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=True)
+    description = serializers.CharField(required=True)
+    date_end = serializers.DateField(required=True)
+
+    class Meta:
+        model = Survey
+        fields = ('id', 'title', 'description', 'date_start', 'date_end',)
