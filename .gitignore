@@ -335,3 +335,4 @@ app/**/migrations/
 dockerfiles/
 .idea/
 dumpfiles/
+.devcontainer/

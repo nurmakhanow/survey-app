@@ -10,7 +10,7 @@ app_name = 'app'
 
 api = [
     path("auth/", include("app.authentication.urls", namespace="auth")),
-    path("surveys/", include("app.surveys.urls", namespace="surveys")),
+    path("", include("app.surveys.urls", namespace="surveys")),
 ]
 
 urlpatterns = [
