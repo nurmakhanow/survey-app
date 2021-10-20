@@ -8,8 +8,10 @@ from app.surveys.serializers import SurveySerializer,\
     SurveyUpdateSerializer, QuestionListSerializer, \
     QuestionRetrieveCreateSerializer, QuestionUpdateSerializer, \
     SurveyDetailSerializer, UserResponseSetCreateSerializer, \
-    UserResponseSetSerializer
+    UserResponseSetSerializer, AnonymousUserIdQueryParamSerializer
 from app.utils.mixins import MultiSerializerViewSetMixin
+from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
 
 
 class AdminSurveyViewSet(MultiSerializerViewSetMixin, 
@@ -71,6 +73,7 @@ class UserSurveyViewSet(MultiSerializerViewSetMixin,
 class UserResponseSetAPIView(views.APIView):
     permission_classes = (AllowAny,)
 
+    @swagger_auto_schema(request_body=UserResponseSetCreateSerializer)
     def post(self, request, *args, **kwargs):
         serializer = UserResponseSetCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -79,8 +82,12 @@ class UserResponseSetAPIView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(name='list', decorator=swagger_auto_schema(
+    query_serializer=AnonymousUserIdQueryParamSerializer,
+    operation_description="At least one of anonymous_user_id or authorization headers must be present",
+))
 class UserResponseSetSurveyViewSet(mixins.ListModelMixin, 
-                                  viewsets.GenericViewSet):
+                                   viewsets.GenericViewSet):
     permission_classes = (AllowAny,)
     serializer_class = UserResponseSetSerializer
     queryset = UserResponseSet.objects.all()

@@ -236,3 +236,7 @@ class UserResponseSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserResponseSet
         fields = ('id', 'user', 'anonymous_user_id', 'survey', 'survey_title', 'responses',)
+
+
+class AnonymousUserIdQueryParamSerializer(serializers.Serializer):
+    anonymous_user_id = serializers.IntegerField(required=False)
