@@ -48,19 +48,21 @@ class UserResponseSet(CreatedUpdatedModelMixin):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         related_name='response_sets', 
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True
     )
     survey = models.ForeignKey(
         Survey, related_name='response_sets', 
         on_delete=models.CASCADE
     )
+    anonymous_user_id = models.IntegerField(null=True)
 
     def __str__(self) -> str:
         return '{} -> {}'.format(self.user, self.survey)
 
 
 class UserResponse(CreatedUpdatedModelMixin):
-    user_survey_response_set = models.ForeignKey(
+    user_response_set = models.ForeignKey(
         UserResponseSet, related_name='responses', 
         on_delete=models.CASCADE
     )

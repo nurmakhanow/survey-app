@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from app.surveys.models import Question, QuestionChoice, Survey
+from app.surveys.models import Question, QuestionChoice, Survey, UserResponse, UserResponseSet
+from rest_framework.exceptions import ValidationError
 
 
 class SurveySerializer(serializers.ModelSerializer):
@@ -62,7 +63,7 @@ class QuestionChoiceRetrieveCreateSerializer(serializers.ModelSerializer):
 
 class QuestionRetrieveCreateSerializer(serializers.ModelSerializer):
     survey_id = serializers.PrimaryKeyRelatedField(queryset=Survey.objects.all(), required=True)
-    choices = QuestionChoiceRetrieveCreateSerializer(many=True)
+    choices = QuestionChoiceRetrieveCreateSerializer(many=True, allow_null=True)
 
     class Meta:
         model = Question
@@ -79,7 +80,7 @@ class QuestionRetrieveCreateSerializer(serializers.ModelSerializer):
 
 
 class QuestionChoiceUpdateSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=True, allow_null=True)
+    id = serializers.IntegerField(required=False, allow_null=True)
 
     class Meta:
         model = QuestionChoice
@@ -99,6 +100,7 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         instance.survey = validated_data.get('survey_id', instance.survey)
         instance.title = validated_data.get('title', instance.title)
         instance.type = validated_data.get('type', instance.type)
+        instance.save()
         choices = validated_data.pop('choices')
         to_create = list()
         to_delete_ids = list(instance.choices.values_list('id', flat=True))
@@ -112,4 +114,92 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         QuestionChoice.objects.bulk_create(to_create)
         choice_ids = instance.choices.values_list('id', flat=True)
         instance.choices.filter(id__in=to_delete_ids).delete()        
+        return instance
+
+
+class UserResponseReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserResponse
+        fields = ('id', 'question_choice', 'question_id', 'text',)
+
+
+class UserResponseCreateSerializer(serializers.ModelSerializer):
+    question_id = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all(), required=False)
+    choices = serializers.ListField(child=serializers.IntegerField(), required=True)
+
+    class Meta:
+        model = UserResponse
+        fields = ('id', 'choices', 'question_id', 'text',)
+
+    def validate(self, attrs):
+        if not QuestionChoice.objects.filter(id__in=attrs['choices']).count() == len(attrs['choices']):
+            raise ValidationError({'choices': 'object not found'})
+        return attrs
+
+    def to_representation(self, instance):
+        return UserResponseReadSerializer(instance).data
+
+
+
+class UserResponseSetCreateSerializer(serializers.Serializer):
+    survey_id = serializers.PrimaryKeyRelatedField(queryset=Survey.objects.all(), required=True)
+    anonymous_user_id = serializers.IntegerField(required=False)
+    responses = UserResponseCreateSerializer(many=True, required=True)
+
+    def validate(self, attrs):
+        survey = attrs['survey_id']
+        # Text, single choice & multiple choice 
+        text_type_qs_ids = survey.questions.filter(type=Question.TEXT).values_list('id', flat=True) 
+        sc_type_qs_ids = survey.questions.filter(type=Question.SINGLE_CHOICE).values_list('id', flat=True)
+        mc_type_qs_ids = survey.questions.filter(type=Question.MULTIPLE_CHOICE).values_list('id', flat=True)
+        errors = dict()
+        for resp in attrs['responses']:
+            question_id = resp['question_id'].id
+            if question_id in text_type_qs_ids and len(resp['choices']) > 0:
+                errors['choices'] = ['must be empty due to Question.type (Text)']
+            if question_id in sc_type_qs_ids and len(resp['choices']) > 1:
+                err = 'must not contain more than 1 value due to Question.type (Single Choice)'
+                errors['choices'] = [err]
+            if question_id in mc_type_qs_ids and resp.get('text'):
+                err = 'must be None due to Question.type (Multiple Choice)'
+                errors['text'] = [err]
+            if question_id in sc_type_qs_ids and resp.get('text'):
+                err = 'must be None due to Question.type (Single Choice)'
+                errors['text'] = [err]
+        if errors:
+            raise ValidationError(errors)
+        return attrs
+
+    def create(self, validated_data):
+        responses = validated_data.pop('responses')
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+            validated_data['anonymous_user_id'] = None
+        validated_data['user'] = user
+        validated_data['survey'] = validated_data.pop('survey_id')
+        instance = UserResponseSet.objects.create(**validated_data)
+        # Bulk create UserResponses
+        to_create = list()
+        for resp in responses:
+            question = resp.get('question_id')
+            text = resp.get('text')
+            selected_choices = resp.get('choices')
+            if selected_choices:
+                for choice_id in selected_choices:
+                    to_create.append(
+                        UserResponse(
+                            user_response_set=instance, 
+                            question_choice_id=choice_id
+                        )
+                    )
+            else:
+                to_create.append(
+                    UserResponse(
+                        user_response_set=instance, 
+                        question=question, text=text, 
+                    )
+                )
+        UserResponse.objects.bulk_create(to_create)
         return instance

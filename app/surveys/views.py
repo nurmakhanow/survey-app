@@ -1,11 +1,12 @@
 from django.utils import timezone
-from rest_framework import viewsets, mixins, generics
+from rest_framework import viewsets, mixins, views, status
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from app.surveys.models import Survey, Question
 from app.surveys.serializers import SurveySerializer,\
      SurveyUpdateSerializer, QuestionListSerializer, \
      QuestionRetrieveCreateSerializer, QuestionUpdateSerializer, \
-     SurveyDetailSerializer
+     SurveyDetailSerializer, UserResponseSetCreateSerializer
 from app.utils.mixins import MultiSerializerViewSetMixin
 
 
@@ -60,3 +61,17 @@ class UserSurveyViewSet(MultiSerializerViewSetMixin,
             date_start__lte=now, date_end__gte=now
         )
         return queryset
+
+
+class UserResponseSetAPIView(views.APIView):
+    permission_classes = (AllowAny,)
+    
+    def get_serializer_context(self):
+        return context
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserResponseSetCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
