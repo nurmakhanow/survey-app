@@ -70,6 +70,11 @@ class QuestionRetrieveCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'survey_id', 'title', 'type', 'choices',)
         read_only_fields = ('id',)
 
+    def validate(self, attrs):
+        if attrs.get('choices') and attrs['type'] == Question.TEXT:
+            raise ValidationError({'choices': ['must not contain values due to Question type Text']})
+        return attrs
+
     def create(self, validated_data):
         validated_data['survey'] = validated_data.pop('survey_id')
         choices = validated_data.pop('choices')
@@ -95,6 +100,11 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         model = Question
         fields = ('id', 'survey_id', 'title', 'type', 'choices',)
         read_only_fields = ('id',)
+
+    def validate(self, attrs):
+        if attrs.get('choices') and attrs['type'] == Question.TEXT:
+            raise ValidationError({'choices': ['must not contain values due to Question type Text']})
+        return attrs
 
     def update(self, instance, validated_data):
         instance.survey = validated_data.get('survey_id', instance.survey)
@@ -137,7 +147,7 @@ class UserResponseCreateSerializer(serializers.ModelSerializer):
         # Remove duplicated ids & check if QuestionChoice with such ids exist
         choices = set(attrs['choices'])
         if not QuestionChoice.objects.filter(id__in=attrs['choices']).count() == len(attrs['choices']):
-            raise ValidationError({'choices': 'at least one object not found or same, check for duplicates'})
+            raise ValidationError({'choices': ['at least one object not found or same, check for duplicates']})
         return attrs
 
     def to_representation(self, instance):
