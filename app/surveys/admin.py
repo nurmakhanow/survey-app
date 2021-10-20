@@ -34,5 +34,5 @@ class UserResponseSetAdmin(admin.ModelAdmin):
 
 @admin.register(UserResponse)
 class UserResponseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_response_set', 'question', 'text', 'question_choice',)
+    list_display = ('id', 'user_response_set', 'question', 'text',)
     readonly_fields = ('id',)

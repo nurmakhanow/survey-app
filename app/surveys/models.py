@@ -67,9 +67,8 @@ class UserResponse(CreatedUpdatedModelMixin):
         on_delete=models.CASCADE
     )
     # If Question.type is Multiple Choice or Signle Choice
-    question_choice = models.ForeignKey(
-        QuestionChoice, related_name='responses', 
-        on_delete=models.SET_NULL, null=True
+    question_choices = models.ManyToManyField(
+        QuestionChoice, related_name='responses', blank=True
     )
     # If Question.type is Text
     question = models.ForeignKey(
@@ -79,4 +78,4 @@ class UserResponse(CreatedUpdatedModelMixin):
     text = models.TextField(null=True)
 
     def __str__(self) -> str:
-        return self.user_survey_response_set
+        return '{}'.format(self.id)

@@ -2,11 +2,12 @@ from django.utils import timezone
 from rest_framework import viewsets, mixins, views, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from app.surveys.models import Survey, Question
+from app.surveys.models import QuestionChoice, Survey, Question, UserResponseSet
 from app.surveys.serializers import SurveySerializer,\
-     SurveyUpdateSerializer, QuestionListSerializer, \
-     QuestionRetrieveCreateSerializer, QuestionUpdateSerializer, \
-     SurveyDetailSerializer, UserResponseSetCreateSerializer
+    SurveyUpdateSerializer, QuestionListSerializer, \
+    QuestionRetrieveCreateSerializer, QuestionUpdateSerializer, \
+    SurveyDetailSerializer, UserResponseSetCreateSerializer, \
+    UserResponseSetSerializer
 from app.utils.mixins import MultiSerializerViewSetMixin
 
 
@@ -60,6 +61,8 @@ class UserSurveyViewSet(MultiSerializerViewSetMixin,
         queryset = Survey.objects.filter(
             date_start__lte=now, date_end__gte=now
         )
+        if self.action == 'retrieve':
+            queryset = queryset.prefetch_related('questions', 'questions__choices')
         return queryset
 
 
@@ -72,3 +75,22 @@ class UserResponseSetAPIView(views.APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserResponseSetSurveyViewSet(mixins.ListModelMixin, 
+                                  viewsets.GenericViewSet):
+    permission_classes = (AllowAny,)
+    serializer_class = UserResponseSetSerializer
+    queryset = UserResponseSet.objects.all()
+
+    def get_queryset(self):
+        queryset = None
+        if self.request.query_params.get('anonymous_user_id'):
+            queryset = UserResponseSet.objects.filter(
+                anonymous_user_id=self.request.query_params.get('anonymous_user_id')
+            ).prefetch_related('responses')
+        elif self.request.user.is_authenticated:
+            queryset = UserResponseSet.objects.filter(
+                user=self.request.user
+            ).prefetch_related('responses')
+        return queryset

@@ -120,7 +120,7 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
 class UserResponseReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserResponse
-        fields = ('id', 'question_choice', 'question_id', 'text',)
+        fields = ('id', 'question_choices', 'question_id', 'text',)
 
 
 class UserResponseCreateSerializer(serializers.ModelSerializer):
@@ -174,26 +174,21 @@ class UserResponseSetCreateSerializer(serializers.Serializer):
         responses = validated_data.pop('responses')
         user = None
         request = self.context["request"]
-        if request.user.is_authenticated:
-            user = request.user
-            validated_data['anonymous_user_id'] = None
-        validated_data['user'] = user
+        if not validated_data.get('anonymous_user_id') and request.user.is_authenticated:
+            validated_data['user'] = request.user
         validated_data['survey'] = validated_data.pop('survey_id')
         instance = UserResponseSet.objects.create(**validated_data)
-        # Bulk create UserResponses
+        # Create UserResponses
         to_create = list()
         for resp in responses:
             question = resp.get('question_id')
             text = resp.get('text')
             selected_choices = resp.get('choices')
             if selected_choices:
-                for choice_id in selected_choices:
-                    to_create.append(
-                        UserResponse(
-                            user_response_set=instance, 
-                            question_choice_id=choice_id
-                        )
-                    )
+                r = UserResponse.objects.create(
+                    user_response_set=instance, 
+                )
+                r.question_choices.add(*selected_choices)
             else:
                 to_create.append(
                     UserResponse(
@@ -203,3 +198,37 @@ class UserResponseSetCreateSerializer(serializers.Serializer):
                 )
         UserResponse.objects.bulk_create(to_create)
         return instance
+
+
+
+class UserQuestionSerializer(serializers.ModelSerializer):
+    choices = QuestionChoiceSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ('id', 'title', 'type', 'choices',)
+
+
+class UserResponseSerializer(serializers.ModelSerializer):
+    question = serializers.SerializerMethodField()
+
+    def get_question(self, instance):
+        question = None
+        if instance.question:
+            question = instance.question
+        elif instance.question_choices.first():
+            question = instance.question_choices.first().question
+        return UserQuestionSerializer(question).data
+
+    class Meta:
+        model = UserResponse
+        fields = ('id', 'question', 'text', 'question_choices',)
+
+
+class UserResponseSetSerializer(serializers.ModelSerializer):
+    survey_title = serializers.CharField(source='survey.title')
+    responses = UserResponseSerializer(many=True)
+
+    class Meta:
+        model = UserResponseSet
+        fields = ('id', 'user', 'anonymous_user_id', 'survey', 'survey_title', 'responses',)
