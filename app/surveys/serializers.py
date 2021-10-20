@@ -173,8 +173,8 @@ class UserResponseSetCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         responses = validated_data.pop('responses')
         user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
+        request = self.context["request"]
+        if request.user.is_authenticated:
             user = request.user
             validated_data['anonymous_user_id'] = None
         validated_data['user'] = user

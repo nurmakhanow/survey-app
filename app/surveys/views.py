@@ -65,9 +65,6 @@ class UserSurveyViewSet(MultiSerializerViewSetMixin,
 
 class UserResponseSetAPIView(views.APIView):
     permission_classes = (AllowAny,)
-    
-    def get_serializer_context(self):
-        return context
 
     def post(self, request, *args, **kwargs):
         serializer = UserResponseSetCreateSerializer(data=request.data, context={'request': request})
