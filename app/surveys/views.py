@@ -3,6 +3,7 @@ from rest_framework import viewsets, mixins, views, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from app.surveys.models import QuestionChoice, Survey, Question, UserResponseSet
+from app.surveys.permissions import IsSurveyAdmin
 from app.surveys.serializers import SurveySerializer,\
     SurveyUpdateSerializer, QuestionListSerializer, \
     QuestionRetrieveCreateSerializer, QuestionUpdateSerializer, \
@@ -17,7 +18,7 @@ class AdminSurveyViewSet(MultiSerializerViewSetMixin,
                          mixins.UpdateModelMixin, 
                          mixins.DestroyModelMixin, 
                          viewsets.GenericViewSet):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsSurveyAdmin,)
     serializer_action_classes = {
         'list': SurveySerializer,
         'create': SurveySerializer,
@@ -29,7 +30,7 @@ class AdminSurveyViewSet(MultiSerializerViewSetMixin,
 
 class QuestionViewSet(MultiSerializerViewSetMixin, 
                       viewsets.ModelViewSet):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsSurveyAdmin,)
     serializer_action_classes = {
         'list': QuestionListSerializer,
         'retrieve': QuestionRetrieveCreateSerializer,
