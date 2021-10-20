@@ -74,7 +74,6 @@ class QuestionRetrieveCreateSerializer(serializers.ModelSerializer):
         choices = validated_data.pop('choices')
         question = Question.objects.create(**validated_data)
         for c in choices:
-            # c_id = c.pop('id')
             QuestionChoice.objects.create(question=question, **c)
         return question
 
