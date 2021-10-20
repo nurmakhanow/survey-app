@@ -2,7 +2,7 @@ from rest_framework import serializers
 from app.surveys.models import Question, QuestionChoice, Survey
 
 
-class AdminSurveySerializer(serializers.ModelSerializer):
+class SurveySerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True)
     description = serializers.CharField(required=True)
     date_start = serializers.DateField(required=True)
@@ -13,7 +13,7 @@ class AdminSurveySerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'description', 'date_start', 'date_end',)
 
 
-class AdminSurveyUpdateSerializer(serializers.ModelSerializer):
+class SurveyUpdateSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True)
     description = serializers.CharField(required=True)
     date_end = serializers.DateField(required=True)
@@ -21,6 +21,28 @@ class AdminSurveyUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Survey
         fields = ('id', 'title', 'description', 'date_start', 'date_end',)
+
+
+class QuestionChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionChoice
+        fields = ('id', 'title',)
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    choices = QuestionChoiceSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ('id', 'title', 'type', 'choices',)
+
+
+class SurveyDetailSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True)
+
+    class Meta:
+        model = Survey
+        fields = ('id', 'title', 'description', 'date_start', 'date_end', 'questions',)
 
 
 class QuestionListSerializer(serializers.ModelSerializer):
