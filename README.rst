@@ -31,3 +31,5 @@ Note!
 Login to django-admin in order to use Swagger endpoints that require Authorization
 
 Only users with 'is_survey_admin=True' are able to CRUD Surveys & Questions
+
+'.envs' added to repo for convenience
