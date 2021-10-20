@@ -44,7 +44,7 @@ class QuestionChoice(CreatedUpdatedModelMixin):
         return self.title
 
 
-class UserSurveyResponseSet(CreatedUpdatedModelMixin):
+class UserResponseSet(CreatedUpdatedModelMixin):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         related_name='response_sets', 
@@ -59,9 +59,9 @@ class UserSurveyResponseSet(CreatedUpdatedModelMixin):
         return '{} -> {}'.format(self.user, self.survey)
 
 
-class UserSurveyResponse(CreatedUpdatedModelMixin):
+class UserResponse(CreatedUpdatedModelMixin):
     user_survey_response_set = models.ForeignKey(
-        UserSurveyResponseSet, related_name='responses', 
+        UserResponseSet, related_name='responses', 
         on_delete=models.CASCADE
     )
     # If Question.type is Multiple Choice or Signle Choice
