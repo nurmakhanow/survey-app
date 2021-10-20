@@ -57,6 +57,7 @@ class UserSurveyViewSet(MultiSerializerViewSetMixin,
     queryset = Survey.objects.all()
 
     def get_queryset(self):
+        # Get actual(active) Survey instances
         now = timezone.now()
         queryset = Survey.objects.filter(
             date_start__lte=now, date_end__gte=now

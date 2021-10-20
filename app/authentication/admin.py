@@ -12,12 +12,12 @@ class UserAdmin(auth_admin.UserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     fieldsets = (
-        (None, {'fields': ('email', 'password', 'is_active')}),
+        (None, {'fields': ('email', 'password', 'is_active',)}),
         ('Change password', {'fields': ('password1', 'password2')}),
-        ('Permissions', {'fields': ('is_superuser', 'is_admin')}),
+        ('Permissions', {'fields': ('is_superuser', 'is_survey_admin')}),
     )
-    list_display = ("email", "is_superuser")
-    list_filter = ('is_active', 'is_superuser')
+    list_display = ("email", "is_superuser", "is_survey_admin",)
+    list_filter = ("is_active", "is_superuser", "is_survey_admin",)
     search_fields = ["email"]
     ordering = ('id',)
     filter_horizontal = ()

@@ -102,7 +102,9 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
         instance.type = validated_data.get('type', instance.type)
         instance.save()
         choices = validated_data.pop('choices')
+        # Create QuestionChoice if there is no ID in db
         to_create = list()
+        # Delete if QuestionChoice.ID in db but not present in data
         to_delete_ids = list(instance.choices.values_list('id', flat=True))
         for c in choices:
             c_id = c.get('id')
@@ -132,8 +134,10 @@ class UserResponseCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'choices', 'question_id', 'text',)
 
     def validate(self, attrs):
+        # Remove duplicated ids & check if QuestionChoice with such ids exist
+        choices = set(attrs['choices'])
         if not QuestionChoice.objects.filter(id__in=attrs['choices']).count() == len(attrs['choices']):
-            raise ValidationError({'choices': 'object not found'})
+            raise ValidationError({'choices': 'at least one object not found or same, check for duplicates'})
         return attrs
 
     def to_representation(self, instance):

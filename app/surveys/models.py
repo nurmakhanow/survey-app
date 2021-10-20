@@ -45,6 +45,7 @@ class QuestionChoice(CreatedUpdatedModelMixin):
 
 
 class UserResponseSet(CreatedUpdatedModelMixin):
+    """Unites user responses into one set"""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         related_name='response_sets', 
